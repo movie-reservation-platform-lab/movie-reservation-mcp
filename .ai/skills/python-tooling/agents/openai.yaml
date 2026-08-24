@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python Tooling"
+  short_description: "Maintain uv, pytest, Ruff, and locked CI"
+  default_prompt: "Use $python-tooling to update this FastMCP repository's reproducible Python toolchain."

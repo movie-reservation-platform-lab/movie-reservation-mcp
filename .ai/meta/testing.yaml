@@ -1,0 +1,3 @@
+type: skill
+skillName: testing
+description: "Use when adding or reviewing pytest coverage for MCP tool contracts, HTTP adapters, error mapping, metadata propagation, health behavior, and process wiring."

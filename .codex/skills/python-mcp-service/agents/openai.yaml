@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python MCP Service"
+  short_description: "Build stable FastMCP adapter contracts"
+  default_prompt: "Use $python-mcp-service to implement or review this FastMCP tool and downstream client change."
