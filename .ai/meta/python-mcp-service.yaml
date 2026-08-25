@@ -1,0 +1,3 @@
+type: skill
+skillName: python-mcp-service
+description: "Use when implementing or reviewing FastMCP tools, downstream HTTP clients, tool result contracts, health routes, configuration, and observability propagation."

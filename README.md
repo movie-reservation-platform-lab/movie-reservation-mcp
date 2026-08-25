@@ -6,31 +6,47 @@ This repository exists so the reservation MCP can have its own issue tracker,
 CI, and artifact pipeline while the implementation is extracted from the
 golden-path/demo baseline.
 
-## Current State
+## Run
 
-This is a scaffold. The first implementation issue should port or rebuild the
-reservation MCP tool contract proven by the local multi-service observability
-demo:
+```sh
+uv run movie-reservation-mcp
+```
+
+Defaults:
+
+- MCP endpoint: `http://127.0.0.1:8091/mcp`
+- Health endpoint: `http://127.0.0.1:8091/health`
+- Downstream GraphQL API: `http://127.0.0.1:3000/graphql`
+- Downstream health API: derived as `http://127.0.0.1:3000/health`
 
 ```text
 browser -> Python agent -> recommendation MCP -> Rust recommendation API
                         -> reservation MCP -> NestJS reservation API
 ```
 
-## Expected Runtime Contract
+Useful environment variables:
 
-- MCP endpoint: `http://127.0.0.1:8091/mcp`
-- Health endpoint: `http://127.0.0.1:8091/health`
-- Downstream API: configured by `MOVIE_RESERVATION_GRAPHQL_URL`
+- `MOVIE_RESERVATION_GRAPHQL_URL`
+- `MOVIE_RESERVATION_HEALTH_URL`
+- `MOVIE_RESERVATION_API_TIMEOUT_SECONDS`
+- `PORT`
+- `HOST`
 
-Expected tools:
+## Tools
 
 - `reservation_get_catalog`
+  - Inputs: optional `movie_id`, optional `fault`, and optional propagation fields.
+  - Calls GraphQL `movies` and `screenings(movieId)`.
 - `reservation_request_seats`
+  - Inputs: `screening_id`, `seat_ids`, optional `fault`, and optional propagation fields.
+  - Calls GraphQL `requestReservation(input)`.
 - `reservation_get_request_status`
+  - Inputs: `reservation_request_id`, optional `fault`, and optional propagation fields.
+  - Calls GraphQL `reservationRequestStatus(id)` and `reservationResult(requestId)`.
 - `reservation_health`
+  - Calls downstream `GET /health`.
 
-Tools should forward:
+Tools forward:
 
 - `traceparent`
 - `tracestate`
@@ -41,5 +57,9 @@ Tools should forward:
 ## Checks
 
 ```sh
-python -m compileall src
+uv sync --frozen
+uv run --frozen --no-sync pytest
+uv run --frozen --no-sync ruff check .
+uv run --frozen --no-sync ruff format --check .
+uv run --frozen --no-sync python -m compileall src tests
 ```

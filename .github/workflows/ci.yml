@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    name: check
+  quality:
+    name: quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,5 +29,40 @@ jobs:
         with:
           python-version-file: .python-version
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install locked dependencies
+        run: uv sync --frozen
+
       - name: Compile Python sources
-        run: python -m compileall src
+        run: uv run --frozen --no-sync python -m compileall src tests
+
+      - name: Lint
+        run: uv run --frozen --no-sync ruff check .
+
+      - name: Check formatting
+        run: uv run --frozen --no-sync ruff format --check .
+
+  contract-tests:
+    name: contract tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install locked dependencies
+        run: uv sync --frozen
+
+      - name: Run MCP contract tests
+        run: uv run --frozen --no-sync pytest

@@ -4,7 +4,36 @@ version = "0.1.0"
 description = "MCP wrapper for the movie reservation GraphQL API"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "fastmcp>=2.0.0",
+  "httpx>=0.28.1",
+  "starlette>=0.40.0",
+  "uvicorn>=0.34.2",
+]
+
+[project.scripts]
+movie-reservation-mcp = "movie_reservation_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/movie_reservation_mcp"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3,<9",
+  "pytest-asyncio>=1.3,<2",
+  "ruff>=0.8,<1",
+]
+
+[tool.uv]
+required-version = "==0.12.3"
+python-preference = "only-managed"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py312"
