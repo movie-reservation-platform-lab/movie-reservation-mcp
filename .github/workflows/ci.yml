@@ -31,12 +31,14 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.3"
 
       - name: Install locked dependencies
         run: uv sync --frozen
 
       - name: Compile Python sources
-        run: uv run --frozen --no-sync python -m compileall src tests
+        run: uv run --frozen --no-sync python -m compileall src tests automation
 
       - name: Lint
         run: uv run --frozen --no-sync ruff check .
@@ -60,9 +62,133 @@ jobs:
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.3"
 
       - name: Install locked dependencies
         run: uv sync --frozen
 
       - name: Run MCP contract tests
-        run: uv run --frozen --no-sync pytest
+        run: uv run --frozen --no-sync pytest tests
+
+  automation-tests:
+    name: repository automation tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version-file: .python-version
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.12.3"
+
+      - name: Install locked dependencies
+        run: uv sync --frozen
+
+      - name: Run repository automation tests
+        run: uv run --frozen --no-sync pytest automation/tests
+
+  container-smoke:
+    name: production container smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build production image
+        run: docker build --tag movie-reservation-mcp:smoke .
+
+      - name: Start task-local downstream stub
+        run: python3 automation/downstream_stub.py &
+
+      - name: Start production container
+        run: docker run --detach --name movie-reservation-mcp --network host movie-reservation-mcp:smoke
+
+      - name: Verify health, MCP route, and runtime user
+        run: |
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8091/health >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              docker logs movie-reservation-mcp
+              exit 1
+            fi
+            sleep 1
+          done
+
+          mcp_status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8091/mcp)"
+          test "$mcp_status" != "000"
+          test "$mcp_status" != "404"
+          test "$(docker exec movie-reservation-mcp id -u)" != "0"
+
+      - name: Stop production container
+        if: always()
+        run: docker stop movie-reservation-mcp || true
+
+  publish-image:
+    name: publish immutable GHCR image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - quality
+      - contract-tests
+      - automation-tests
+      - container-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish single-platform image
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8
+        with:
+          context: .
+          platforms: linux/amd64
+          provenance: false
+          push: true
+          tags: ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Create explicit build provenance
+        id: attest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
+        with:
+          subject-name: ghcr.io/${{ github.repository }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: false
+
+      - name: Report immutable candidate
+        run: |
+          echo "### Reservation MCP candidate" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Image: \`ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Provenance: ${{ steps.attest.outputs.attestation-url }}" >> "$GITHUB_STEP_SUMMARY"
