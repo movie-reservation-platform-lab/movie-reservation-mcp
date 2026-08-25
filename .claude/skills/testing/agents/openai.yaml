@@ -1,4 +1,0 @@
-interface:
-  display_name: "MCP Testing"
-  short_description: "Test FastMCP tools and HTTP adapters"
-  default_prompt: "Use $testing to design or update pytest coverage for this MCP contract or downstream adapter."

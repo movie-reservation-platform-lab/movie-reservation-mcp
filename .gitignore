@@ -6,6 +6,13 @@ dist/
 build/
 *.egg-info/
 
+# Generated from the canonical .ai/ guidance.
+.claude/
+.codex/
+.cursor/
+.gemini/
+.roo/
+
 .env
 .env.*
 !.env.example
