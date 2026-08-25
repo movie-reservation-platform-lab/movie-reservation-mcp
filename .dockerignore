@@ -1,0 +1,15 @@
+.git
+.github
+.ai
+.claude
+.codex
+.cursor
+.gemini
+.roo
+.venv
+automation
+build
+dist
+tests
+__pycache__
+*.egg-info
