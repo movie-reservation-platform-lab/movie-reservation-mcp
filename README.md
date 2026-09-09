@@ -78,6 +78,22 @@ uv run --frozen --no-sync python -m compileall src tests automation
 ```
 
 Pushes to `main` publish a Linux AMD64 candidate to GHCR as
-`sha-<commit>`. CI disables BuildKit's automatic registry attestation to keep
+`sha-<commit>-run-<run-id>-attempt-<attempt>`. CI disables BuildKit's automatic registry attestation to keep
 the candidate a single-image manifest, then records explicit GitHub build
 provenance against the published digest for the environment admission gate.
+
+### Container security evidence
+
+The pinned organization-owned actions publish the signed
+`reservation-mcp-security-evidence-<run-id>-attempt-<attempt>` artifact:
+`component-candidate-evidence-v1alpha2.json`, verified image provenance,
+CycloneDX SBOM, and subject-bound vulnerability report. Evidence is retained
+for 14 days. Missing provenance or CRITICAL findings fail publication of the
+canonical evidence package; HIGH findings remain visible for admission review.
+
+Run/attempt tags are discovery hints, not deployment selectors. Environment
+verification independently checks the successful canonical run and signed
+package before admitting its exact digest to ECR. This producer has no AWS
+credentials or deployment authority. Older runs without this package are not
+eligible for the new admission path; use a fresh successful main run.
+See [the shared action contract](https://github.com/movie-reservation-platform-lab/.github/blob/86d1eb043e057b9b709e10d3dc19d4ea35a4cbf7/docs/container-candidate-actions.md).
