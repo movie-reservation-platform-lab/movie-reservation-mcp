@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,8 +32,8 @@ def test_publication_is_main_only_gated_and_attested() -> None:
     assert "attestations: write" in publish_job
     assert "platforms: linux/amd64" in publish_job
     assert "provenance: false" in publish_job
-    assert "actions/attest-build-provenance@" in publish_job
-    assert "push-to-registry: false" in publish_job
+    assert "/actions/container-evidence@" in publish_job
+    assert "digest: ${{ steps.build.outputs.digest }}" in publish_job
     assert "pull_request_target:" not in WORKFLOW
 
 
@@ -58,3 +59,21 @@ def workflow_job(name: str) -> str:
         len(lines),
     )
     return "\n".join(lines[start:end])
+
+
+def test_shared_evidence_has_pinned_identity_and_precedes_no_quality_gate() -> None:
+    publish_job = workflow_job("publish-image")
+    assert "github.repository == 'movie-reservation-platform-lab/movie-reservation-mcp'" in publish_job
+    assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in WORKFLOW
+    assert "persist-credentials: false" in publish_job
+    assert "component: reservation-mcp" in publish_job
+    assert "tags: ${{ steps.candidate.outputs.image_ref }}:${{ steps.candidate.outputs.tag }}" in publish_job
+    assert publish_job.index("/actions/prepare-container-candidate@") < publish_job.index("docker/login-action@")
+    assert publish_job.index("docker/build-push-action@") < publish_job.index("/actions/container-evidence@")
+    references = re.findall(r"uses: (\S+)", WORKFLOW)
+    assert all(re.fullmatch(r"[^@]+@[0-9a-f]{40}", reference) for reference in references)
+    shared_pins = [
+        reference.split("@")[1] for reference in references if "/movie-platform-actions/actions/" in reference
+    ]
+    assert len(shared_pins) == 2 and shared_pins[0] == shared_pins[1]
+    assert "aws-actions/" not in WORKFLOW
