@@ -72,6 +72,10 @@ def test_shared_evidence_has_pinned_identity_and_precedes_no_quality_gate() -> N
     assert publish_job.index("docker/build-push-action@") < publish_job.index("/actions/container-evidence@")
     references = re.findall(r"uses: (\S+)", WORKFLOW)
     assert all(re.fullmatch(r"[^@]+@[0-9a-f]{40}", reference) for reference in references)
-    shared_pins = [reference.split("@")[1] for reference in references if "/.github/actions/" in reference]
+    shared_pins = [
+        reference.split("@")[1]
+        for reference in references
+        if "/movie-platform-actions/actions/" in reference
+    ]
     assert len(shared_pins) == 2 and shared_pins[0] == shared_pins[1]
     assert "aws-actions/" not in WORKFLOW
