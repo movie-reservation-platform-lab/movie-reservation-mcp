@@ -1,5 +1,8 @@
 # Implementation Plan: container evidence admission parity
 
+> Historical v1alpha2 design. The current PR #9 implementation and dependencies
+> are superseded by [the v1alpha3 security-gate plan](container-security-pr-gate.md).
+
 ## 1. Summary
 
 Issue #7: adopt the organization-owned container evidence actions, independently of runtime changes.

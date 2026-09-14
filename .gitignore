@@ -2,6 +2,9 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.platform-actions/
+.local-container-security/
+security-evidence/
 dist/
 build/
 *.egg-info/
