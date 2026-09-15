@@ -112,7 +112,26 @@ credentials or deployment authority. Older runs without this package are not
 eligible for the new admission path; use a fresh successful main run.
 The environment reader must support v1alpha3 before admission. It independently
 reevaluates original findings against the latest approved central policy.
-See [the shared action contract](https://github.com/movie-reservation-platform-lab/movie-platform-actions/blob/bb40579c285df0b581c48b10f9b34574d5c78639/docs/container-candidate-actions.md).
+See [the shared action contract](https://github.com/movie-reservation-platform-lab/movie-platform-actions/blob/036531133bcefd454b5afc0eb55f8ba0328901ea/docs/container-candidate-actions.md).
+
+This producer adopts [actions PR #18](https://github.com/movie-reservation-platform-lab/movie-platform-actions/pull/18)
+at `036531133bcefd454b5afc0eb55f8ba0328901ea`, following the validated
+[recommendation-MCP canary PR #13](https://github.com/movie-reservation-platform-lab/movie-recommendation-mcp/pull/13).
+Both publisher actions and the PR/local scanner use that reviewed revision.
+Prepare receives `github-token: ${{ github.token }}` for its authenticated
+canonical-main lookup, using the publishing job's existing `contents: read`
+permission. Its other publishing permissions remain necessary; passing the token
+does not reduce its authority. The release also hardens evidence failure paths,
+including bounded legacy report reads and sanitized failures, and scanner cleanup.
+Evidence remains v1alpha3 for `reservation-mcp`.
+
+Offline caller tests verify wiring, permissions and event guards. Hosted PR scanning
+does not exercise prepare or prove private-repository access or canonical publication;
+those require separate post-merge acceptance. Publication remains restricted to a push
+on this repository's canonical main. Rollback reverts both publisher pins, the PR/local
+tooling checkout, and the documented local tooling pin to
+`bb40579c285df0b581c48b10f9b34574d5c78639`, and removes the prepare token input
+together. See the [adoption plan](docs/plans/authenticated-prepare-adoption.md).
 
 ### PR and local vulnerability checks
 
@@ -131,7 +150,7 @@ To reproduce using a sibling actions checkout at the reviewed commit:
 
 ```sh
 git -C ../movie-platform-actions rev-parse HEAD
-# Expected: bb40579c285df0b581c48b10f9b34574d5c78639
+# Expected: 036531133bcefd454b5afc0eb55f8ba0328901ea
 docker build --pull --platform linux/amd64 --target prod \
   --tag movie-reservation-mcp:local .
 # Supply GH_TOKEN securely through your normal environment setup.

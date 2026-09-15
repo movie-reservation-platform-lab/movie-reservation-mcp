@@ -9,7 +9,9 @@ followed by implementation under the user's request to complete and validate it.
 ## 2. Goals
 
 - Pin both publication actions and PR tooling to
-  `bb40579c285df0b581c48b10f9b34574d5c78639` (merged actions PR #13).
+  `036531133bcefd454b5afc0eb55f8ba0328901ea` (merged actions PR #18), supplying
+  the required prepare token through the existing publishing permissions. See
+  the [authenticated prepare adoption plan](authenticated-prepare-adoption.md).
 - Adopt v1alpha3 evidence and a read-only PR production-image vulnerability gate.
 - Remediate this image's blocking findings, retain complete diagnostics and
   verify the installed MCP runtime, then update existing PR #9 with `[ai]` prefix.
