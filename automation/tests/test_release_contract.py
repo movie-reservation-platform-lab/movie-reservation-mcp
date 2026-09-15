@@ -108,6 +108,25 @@ def test_prepare_receives_explicit_caller_token() -> None:
     assert "          github-token: ${{ github.token }}\n" in prepare_step
 
 
+def test_container_evidence_receives_exact_candidate_inputs() -> None:
+    evidence_step = workflow_step(workflow_job("publish-image"), "Attest and publish security evidence")
+
+    assert f"/actions/container-evidence@{REVIEWED_ACTIONS_SHA}" in evidence_step
+    assert evidence_step.endswith(
+        "        with:\n"
+        "          evidence-version: v1alpha3\n"
+        "          component: reservation-mcp\n"
+        "          digest: ${{ steps.build.outputs.digest }}\n"
+        "          github-token: ${{ github.token }}"
+    )
+
+
+def test_producer_workflow_does_not_use_environment_reader_app_credentials() -> None:
+    assert "actions/create-github-app-token" not in WORKFLOW
+    assert "EVIDENCE_READER_APP_" not in WORKFLOW
+    assert "EXEMPTION_POLICY_READER_APP_" not in WORKFLOW
+
+
 def test_shared_evidence_has_pinned_identity_and_precedes_no_quality_gate() -> None:
     publish_job = workflow_job("publish-image")
     assert "github.repository == 'movie-reservation-platform-lab/movie-reservation-mcp'" in publish_job
