@@ -206,14 +206,7 @@ def configure_telemetry() -> Telemetry:
 
     service_name = os.getenv("OTEL_SERVICE_NAME", SERVICE_NAME)
     service_version = os.getenv("SERVICE_VERSION", "unknown")
-    resource = Resource.create(
-        {
-            "service.name": service_name,
-            "service.namespace": os.getenv("SERVICE_NAMESPACE", "movie-platform"),
-            "service.version": service_version,
-            "deployment.environment.name": os.getenv("DEPLOYMENT_ENVIRONMENT", "local"),
-        }
-    )
+    resource = build_resource(service_name=service_name, service_version=service_version)
     logger = configure_logging(service_name=service_name, service_version=service_version)
 
     tracer_provider = TracerProvider(resource=resource)
@@ -238,6 +231,22 @@ def configure_telemetry() -> Telemetry:
         logger=logger,
     )
     return _configured_telemetry
+
+
+def build_resource(*, service_name: str, service_version: str) -> Resource:
+    attributes = {"service.name": service_name, "service.version": service_version}
+    if service_namespace := os.getenv("SERVICE_NAMESPACE"):
+        attributes["service.namespace"] = service_namespace
+    if deployment_environment := os.getenv("DEPLOYMENT_ENVIRONMENT"):
+        attributes["deployment.environment.name"] = deployment_environment
+
+    resource = Resource.create(attributes)
+    fallbacks: dict[str, str] = {}
+    if "service.namespace" not in resource.attributes:
+        fallbacks["service.namespace"] = "movie-platform"
+    if "deployment.environment.name" not in resource.attributes:
+        fallbacks["deployment.environment.name"] = "local"
+    return resource.merge(Resource(fallbacks))
 
 
 def configure_logging(*, service_name: str, service_version: str) -> logging.Logger:

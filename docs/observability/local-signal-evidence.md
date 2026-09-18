@@ -27,8 +27,9 @@ Both spans and metrics carry:
 | `service.version` | `test-version` | `SERVICE_VERSION` |
 | `deployment.environment.name` | `test` | `DEPLOYMENT_ENVIRONMENT` |
 
-Runtime defaults are documented in the README. Deployment owns the production
-values.
+Runtime defaults are documented in the README. Platform-owned values from
+`OTEL_RESOURCE_ATTRIBUTES` are preserved unless their dedicated environment
+variable is explicitly supplied. Deployment owns the production values.
 
 ## Native metrics
 

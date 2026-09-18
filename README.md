@@ -69,9 +69,9 @@ requests and still maintains local trace context. Configure canonical identity
 with:
 
 - `OTEL_SERVICE_NAME` (default `movie-reservation-mcp`)
-- `SERVICE_NAMESPACE` (default `movie-platform`)
+- `SERVICE_NAMESPACE` (otherwise `OTEL_RESOURCE_ATTRIBUTES`, then `movie-platform`)
 - `SERVICE_VERSION` (default `unknown`)
-- `DEPLOYMENT_ENVIRONMENT` (default `local`)
+- `DEPLOYMENT_ENVIRONMENT` (otherwise `OTEL_RESOURCE_ATTRIBUTES`, then `local`)
 
 Native tool metrics are `movie_reservation_mcp_tool_calls` (`{call}` counter)
 and `movie_reservation_mcp_tool_duration` (`s` histogram). Their only

@@ -25,6 +25,7 @@ from movie_reservation_mcp.telemetry import (
     TOOL_DURATION_METRIC,
     JsonFormatter,
     Telemetry,
+    build_resource,
 )
 
 INCOMING_TRACE_ID = "a" * 32
@@ -188,6 +189,22 @@ def test_no_exporter_tool_call_records_locally_without_failing() -> None:
 
     with telemetry.tool_call("reservation_health") as observation:
         observation.finish("success")
+
+
+def test_resource_preserves_platform_owned_otel_attributes(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("SERVICE_NAMESPACE", raising=False)
+    monkeypatch.delenv("DEPLOYMENT_ENVIRONMENT", raising=False)
+    monkeypatch.setenv(
+        "OTEL_RESOURCE_ATTRIBUTES",
+        "service.namespace=movie-reservation-platform,deployment.environment.name=aws-demo",
+    )
+
+    resource = build_resource(service_name="movie-reservation-mcp", service_version="release-1")
+
+    assert resource.attributes["service.name"] == "movie-reservation-mcp"
+    assert resource.attributes["service.namespace"] == "movie-reservation-platform"
+    assert resource.attributes["service.version"] == "release-1"
+    assert resource.attributes["deployment.environment.name"] == "aws-demo"
 
 
 def test_correlated_json_log_has_canonical_identity_and_active_trace() -> None:
