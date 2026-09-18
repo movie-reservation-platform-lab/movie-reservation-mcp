@@ -6,6 +6,9 @@ from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 import httpx
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.metrics import MeterProvider
+from opentelemetry.trace import TracerProvider
 
 DEFAULT_GRAPHQL_URL = "http://127.0.0.1:3000/graphql"
 DEFAULT_TIMEOUT_SECONDS = 10.0
@@ -134,11 +137,19 @@ class ReservationClient:
         self,
         settings: ReservationClientSettings | None = None,
         http_client: httpx.AsyncClient | None = None,
+        tracer_provider: TracerProvider | None = None,
+        meter_provider: MeterProvider | None = None,
     ) -> None:
         self._settings = settings or load_client_settings()
         self._client = http_client or httpx.AsyncClient(timeout=self._settings.timeout_seconds)
+        HTTPXClientInstrumentor.instrument_client(
+            self._client,
+            tracer_provider=tracer_provider,
+            meter_provider=meter_provider,
+        )
 
     async def close(self) -> None:
+        HTTPXClientInstrumentor.uninstrument_client(self._client)
         await self._client.aclose()
 
     async def health(self, metadata: RequestMetadata) -> dict[str, Any]:

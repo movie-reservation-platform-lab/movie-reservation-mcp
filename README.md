@@ -56,6 +56,34 @@ Useful environment variables:
 - `PORT`
 - `HOST`
 
+### Observability
+
+Each MCP tool extracts the existing `traceparent` and `tracestate` arguments
+before opening its server span. The instrumented HTTPX client creates a child
+span and injects that active context into the reservation API request. Tool
+results and propagation arguments remain backward compatible.
+
+The service emits OTLP/HTTP protobuf traces and metrics when
+`OTEL_EXPORTER_OTLP_ENDPOINT` is set. Without an exporter it keeps serving
+requests and still maintains local trace context. Configure canonical identity
+with:
+
+- `OTEL_SERVICE_NAME` (default `movie-reservation-mcp`)
+- `SERVICE_NAMESPACE` (otherwise `OTEL_RESOURCE_ATTRIBUTES`, then `movie-platform`)
+- `SERVICE_VERSION` (default `unknown`)
+- `DEPLOYMENT_ENVIRONMENT` (otherwise `OTEL_RESOURCE_ATTRIBUTES`, then `local`)
+
+Native tool metrics are `movie_reservation_mcp_tool_calls` (`{call}` counter)
+and `movie_reservation_mcp_tool_duration` (`s` histogram). Their only
+signal-specific attributes are the allowlisted `mcp.tool.name` and bounded
+`outcome`. Health-route traffic is excluded. Structured stdout events contain
+canonical service identity plus trace/span and bounded correlation/request IDs
+when real context supplies them. They never include request bodies, downstream
+error bodies, credentials, or caller-selected values as metric labels.
+
+The local exporter evidence and backend mapping boundary are documented in
+[`docs/observability/local-signal-evidence.md`](docs/observability/local-signal-evidence.md).
+
 ## Tools
 
 - `reservation_get_catalog`
