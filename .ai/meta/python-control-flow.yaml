@@ -1,0 +1,3 @@
+type: skill
+skillName: python-control-flow
+description: "Use when writing, refactoring, or reviewing Python code for flat control flow, guard clauses, redundant else branches, meaningful helpers, explicit conditions, validation ordering, and behavior-preserving readability changes."
