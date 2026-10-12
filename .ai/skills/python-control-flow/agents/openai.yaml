@@ -1,0 +1,4 @@
+interface:
+  display_name: "Python Control Flow"
+  short_description: "Keep Python control flow flat and readable"
+  default_prompt: "Use $python-control-flow to write or review this Python change for flat, explicit, behavior-preserving control flow."

@@ -55,7 +55,8 @@ platform API.
 
 1. Inspect the existing tool and downstream API contracts.
 2. Identify compatibility and failure semantics before editing.
-3. Change the smallest tool/client boundary.
+3. Change the smallest tool/client boundary, following `python-control-flow`
+   for readable, flat control flow.
 4. Add contract tests for success, invalid input, downstream failure, timeout,
    malformed response, and metadata propagation as applicable.
 5. Run frozen pytest, Ruff lint/format, and compile checks from the repository
